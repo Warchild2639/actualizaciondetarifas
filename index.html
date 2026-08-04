@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Control de Internos</title>
+    <style>
+        * { box-sizing: border-box; font-family: sans-serif; margin: 0; padding: 0; }
+        body { background: #f0f2f5; padding: 15px; text-align: center; -webkit-user-select: none; user-select: none; }
+        h1 { margin-bottom: 15px; font-size: 1.5rem; color: #333; }
+        
+        /* Menú de líneas */
+        .menu-lineas { display: grid; grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); gap: 10px; margin-bottom: 20px; }
+        .btn-linea { background: #007bff; color: white; border: none; padding: 12px; font-size: 1rem; font-weight: bold; border-radius: 8px; cursor: pointer; }
+        .btn-linea.activo { background: #0056b3; box-shadow: inset 0 0 5px rgba(0,0,0,0.5); }
+        
+        /* Grilla de colectivos */
+        .contenedor-internos { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 15px; }
+        .interno { background: white; border: 2px solid #ccc; border-radius: 8px; padding: 15px 5px; font-size: 1.1rem; font-weight: bold; position: relative; display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 70px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        
+        /* Estados */
+        .interno.descargado { background: #28a745 !important; color: white; border-color: #1e7e34; }
+        .nota-indicador { font-size: 0.65rem; color: #666; font-weight: normal; margin-top: 4px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .interno.descargado .nota-indicador { color: #e2fcd4; }
+        
+        /* Mensaje de carga o error */
+        .mensaje-estado { color: #666; font-style: italic; margin-top: 20px; grid-column: span 4; }
+    </style>
+</head>
+<body>
+
+    <h1 id="titulo-vista">Seleccione una Línea</h1>
+    
+    <!-- Menú de Líneas -->
+    <div class="menu-lineas">
+        <button class="btn-linea" onclick="cargarLinea('271', this)">271</button>
+        <button class="btn-linea" onclick="cargarLinea('373', this)">373</button>
+        <button class="btn-linea" onclick="cargarLinea('384', this)">384</button>
+        <button class="btn-linea" onclick="cargarLinea('177', this)">177</button>
+        <button class="btn-linea" onclick="cargarLinea('263', this)">263</button>
+        <button class="btn-linea" onclick="cargarLinea('79', this)">79</button>
+        <button class="btn-linea" onclick="cargarLinea('514', this)">514</button>
+        <button class="btn-linea" onclick="cargarLinea('varela', this)">Var.</button>
+    </div>
+
+    <!-- Panel de Internos -->
+    <div class="contenedor-internos" id="panel-internos">
+        <div class="mensaje-estado">Ninguna línea seleccionada</div>
+    </div>
+    
+    <script>
+        function cargarLinea(linea, botonElemento) {
+            document.getElementById('titulo-vista').innerText = `Cargando Línea ${linea.toUpperCase()}...`;
+            
+            // Marcar botón activo visualmente
+            document.querySelectorAll('.btn-linea').forEach(btn => btn.classList.remove('activo'));
+            botonElemento.classList.add('activo');
+
+            const contenedor = document.getElementById('panel-internos');
+            contenedor.innerHTML = `<div class="mensaje-estado">Buscando archivo lineas/${linea}.txt...</div>`;
+
+            // Buscamos el archivo de texto en la subcarpeta local
+            fetch(`lineas/${linea}.txt`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`No se encontró el archivo de la línea ${linea}`);
+                    }
+                    return response.text();
+                })
+                .then(texto => {
+                    document.getElementById('titulo-vista').innerText = `Línea ${linea.toUpperCase()}`;
+                    contenedor.innerHTML = "";
+
+                    // Separar el texto por saltos de línea y limpiar espacios en blanco o líneas vacías
+                    const internos = texto.split('\n')
+                                          .map(linea => linea.trim())
+                                          .filter(linea => linea.length > 0);
+
+                    if (internos.length === 0) {
+                        contenedor.innerHTML = `<div class="mensaje-estado">El archivo de la línea ${linea} está vacío.</div>`;
+                        return;
+                    }
+
+                    // Renderizar los internos en pantalla
+                    internos.forEach(num => {
+                        const div = document.createElement('div');
+                        div.className = 'interno';
+                        div.setAttribute('data-interno', num);
+                        
+                        // Clave para guardar el estado individual en localStorage
+                        const idEstado = `${linea}-${num}`;
+                        const estadoGuardado = JSON.parse(localStorage.getItem(idEstado)) || { descargado: false, nota: "" };
+
+                        if (estadoGuardado.descargado) div.classList.add('descargado');
+                        
+                        div.innerHTML = `<span>${num}</span><div class="nota-indicador">${estadoGuardado.nota}</div>`;
+
+                        // Configurar eventos de toque
+                        configurarEventosToque(div, idEstado);
+
+                        contenedor.appendChild(div);
+                    });
+                })
+                .catch(error => {
+                    document.getElementById('titulo-vista').innerText = "Error";
+                    contenedor.innerHTML = `<div class="mensaje-estado" style="color: red;">⚠️ Error al cargar el archivo de la línea ${linea}. Asegurate de que exista en la carpeta "lineas".</div>`;
+                    console.error(error);
+                });
+        }
+
+        function configurarEventosToque(elemento, idEstado) {
+            let tiempoPresionado;
+            let esToqueLargo = false;
+
+            elemento.addEventListener('touchstart', (e) => {
+                esToqueLargo = false;
+                tiempoPresionado = setTimeout(() => {
+                    esToqueLargo = true;
+                    abrirCreadorNotas(elemento, idEstado);
+                }, 600); // 600ms para detectar toque largo
+            });
+
+            elemento.addEventListener('touchend', (e) => {
+                clearTimeout(tiempoPresionado);
+                if (!esToqueLargo) {
+                    e.preventDefault(); 
+                    alternarDescarga(elemento, idEstado);
+                }
+            });
+        }
+
+        function alternarDescarga(elemento, idEstado) {
+            const estado = JSON.parse(localStorage.getItem(idEstado)) || { descargado: false, nota: "" };
+            estado.descargado = !estado.descargado;
+            
+            localStorage.setItem(idEstado, JSON.stringify(estado));
+            elemento.classList.toggle('descargado');
+        }
+
+        function abrirCreadorNotas(elemento, idEstado) {
+            const estado = JSON.parse(localStorage.getItem(idEstado)) || { descargado: false, nota: "" };
+            const nuevaNota = prompt("Escribí un mensaje para este interno:", estado.nota);
+            
+            if (nuevaNota !== null) {
+                estado.nota = nuevaNota.trim();
+                localStorage.setItem(idEstado, JSON.stringify(estado));
+                elemento.querySelector('.nota-indicador').innerText = estado.nota;
+            }
+        }
+    </script>
+</body>
+</html>
