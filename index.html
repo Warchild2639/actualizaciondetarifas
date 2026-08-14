@@ -95,7 +95,7 @@
                         
                         div.innerHTML = `<span>${num}</span><div class="nota-indicador">${estadoGuardado.nota}</div>`;
 
-                        // Configurar eventos de toque
+                        // Configurar eventos de toque largo únicamente
                         configurarEventosToque(div, idEstado);
 
                         contenedor.appendChild(div);
@@ -110,22 +110,27 @@
 
         function configurarEventosToque(elemento, idEstado) {
             let tiempoPresionado;
-            let esToqueLargo = false;
 
+            // Inicia la presión en pantallas táctiles
             elemento.addEventListener('touchstart', (e) => {
-                esToqueLargo = false;
                 tiempoPresionado = setTimeout(() => {
-                    esToqueLargo = true;
-                    abrirCreadorNotas(elemento, idEstado);
-                }, 600); // 600ms para detectar toque largo
+                    alternarDescarga(elemento, idEstado);
+                }, 600); // 600ms manteniendo apretado para marcar en verde
             });
 
-            elemento.addEventListener('touchend', (e) => {
+            // Si el usuario mueve el dedo (hace scroll), se cancela la acción
+            elemento.addEventListener('touchmove', () => {
                 clearTimeout(tiempoPresionado);
-                if (!esToqueLargo) {
-                    e.preventDefault(); 
-                    alternarDescarga(elemento, idEstado);
-                }
+            });
+
+            // Si suelta antes de tiempo, se cancela la acción
+            elemento.addEventListener('touchend', () => {
+                clearTimeout(tiempoPresionado);
+            });
+
+            // Evitar comportamiento por defecto del clic corto en celulares o PC
+            elemento.addEventListener('click', (e) => {
+                e.preventDefault();
             });
         }
 
@@ -135,17 +140,6 @@
             
             localStorage.setItem(idEstado, JSON.stringify(estado));
             elemento.classList.toggle('descargado');
-        }
-
-        function abrirCreadorNotas(elemento, idEstado) {
-            const estado = JSON.parse(localStorage.getItem(idEstado)) || { descargado: false, nota: "" };
-            const nuevaNota = prompt("Escribí un mensaje para este interno:", estado.nota);
-            
-            if (nuevaNota !== null) {
-                estado.nota = nuevaNota.trim();
-                localStorage.setItem(idEstado, JSON.stringify(estado));
-                elemento.querySelector('.nota-indicador').innerText = estado.nota;
-            }
         }
     </script>
 </body>
