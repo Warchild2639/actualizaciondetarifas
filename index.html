@@ -40,7 +40,7 @@
         <button class="btn-linea" onclick="cargarLinea('263', this)">263</button>
         <button class="btn-linea" onclick="cargarLinea('79', this)">79</button>
         <button class="btn-linea" onclick="cargarLinea('514', this)">514</button>
-        <button class="btn-linea" onclick="cargarLinea('varela', this)">Var.</button>
+        <button class="btn-linea" onclick="cargarLinea('varela', this)">Varela</button>
     </div>
 
     <!-- Panel de Internos -->
@@ -95,7 +95,7 @@
                         
                         div.innerHTML = `<span>${num}</span><div class="nota-indicador">${estadoGuardado.nota}</div>`;
 
-                        // Configurar eventos táctiles y clics
+                        // Configurar eventos de toque largo únicamente
                         configurarEventosToque(div, idEstado);
 
                         contenedor.appendChild(div);
@@ -110,44 +110,25 @@
 
         function configurarEventosToque(elemento, idEstado) {
             let tiempoPresionado;
-            let ultimoToque = 0;
 
             // Inicia la presión en pantallas táctiles
             elemento.addEventListener('touchstart', (e) => {
-                const ahora = new Date().getTime();
-                const diferenciaTiempo = ahora - ultimoToque;
-                
-                // Si el espacio de tiempo entre toques es menor a 300ms, es un doble toque
-                if (diferenciaTiempo < 300 && diferenciaTiempo > 0) {
-                    clearTimeout(tiempoPresionado); // Cancela el toque largo si se detecta doble toque rápido
-                    abrirCreadorNotas(elemento, idEstado);
-                    ultimoToque = 0; // Resetea para el próximo ciclo
-                    return;
-                }
-                
-                ultimoToque = ahora;
-
                 tiempoPresionado = setTimeout(() => {
                     alternarDescarga(elemento, idEstado);
                 }, 600); // 600ms manteniendo apretado para marcar en verde
             });
 
-            // Si el usuario mueve el dedo (hace scroll), se cancela el toque largo
+            // Si el usuario mueve el dedo (hace scroll), se cancela la acción
             elemento.addEventListener('touchmove', () => {
                 clearTimeout(tiempoPresionado);
             });
 
-            // Si suelta antes de tiempo, se cancela el toque largo
+            // Si suelta antes de tiempo, se cancela la acción
             elemento.addEventListener('touchend', () => {
                 clearTimeout(tiempoPresionado);
             });
 
-            // Soporte para computadoras (Doble clic)
-            elemento.addEventListener('dblclick', () => {
-                abrirCreadorNotas(elemento, idEstado);
-            });
-
-            // Cancelar el comportamiento del clic simple tradicional
+            // Evitar comportamiento por defecto del clic corto en celulares o PC
             elemento.addEventListener('click', (e) => {
                 e.preventDefault();
             });
@@ -159,17 +140,6 @@
             
             localStorage.setItem(idEstado, JSON.stringify(estado));
             elemento.classList.toggle('descargado');
-        }
-
-        function abrirCreadorNotas(elemento, idEstado) {
-            const estado = JSON.parse(localStorage.getItem(idEstado)) || { descargado: false, nota: "" };
-            const nuevaNota = prompt("Escribí un mensaje para este interno:", estado.nota);
-            
-            if (nuevaNota !== null) {
-                estado.nota = nuevaNota.trim();
-                localStorage.setItem(idEstado, JSON.stringify(estado));
-                elemento.querySelector('.nota-indicador').innerText = estado.nota;
-            }
         }
     </script>
 </body>
