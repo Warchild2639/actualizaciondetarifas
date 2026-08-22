@@ -101,25 +101,27 @@
         <h2 id="titulo-linea">Seleccione una línea</h2>
         <div id="internos-container" class="internos-grid"></div>
     </div>
-    <script type="module">
-    import { initializeApp } from "https://gstatic.com";
-    import { getDatabase, ref, set, onValue } from "https://gstatic.com";
+    <!-- Librerías de Firebase en formato clásico e inyectables al entorno global -->
+    <script src="https://gstatic.com"></script>
+    <script src="https://gstatic.com"></script>
 
+    <script>
     // Pegá acá tus credenciales reales obtenidas de la consola de Firebase
     const firebaseConfig = {
-      apiKey: "TU_API_KEY_AQUÍ",
-      authDomain: "TU_AUTH_DOMAIN_AQUÍ",
-      databaseURL: "TU_DATABASE_URL_AQUÍ",
-      projectId: "TU_PROJECT_ID_AQUÍ",
-      storageBucket: "TU_STORAGE_BUCKET_AQUÍ",
-      messagingSenderId: "TU_MESSAGING_SENDER_ID_AQUÍ",
-      appId: "TU_APP_ID_AQUÍ"
+      apiKey: "AIzaSyBdYu1yjsshw0lXXQ9PRlN-hPEHB6tjNF4",
+      authDomain: "tarifas-compartidas.firebaseapp.com",
+      databaseURL: "https://tarifas-compartidas-default-rtdb.firebaseio.com",
+      projectId: "tarifas-compartidas",
+      storageBucket: "tarifas-compartidas.firebasestorage.app",
+      messagingSenderId: "943166246045",
+      appId: "1:943166246045:web:f0df71d42acf52ebf15874"
     };
 
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
+    // Inicialización universal
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
     let lineaActual = "";
-    window.cargarLinea = function(linea, botonElemento) {
+    function cargarLinea(linea, botonElemento) {
         lineaActual = linea;
         
         document.querySelectorAll('.btn-linea').forEach(b => b.classList.remove('active'));
@@ -140,8 +142,9 @@
                 const contenedor = document.getElementById('internos-container');
                 contenedor.innerHTML = '';
 
-                const lineaRef = ref(db, `lineas/${lineaActual}`);
-                onValue(lineaRef, (snapshot) => {
+                // Escucha de datos clásica
+                const lineaRef = db.ref(`lineas/${lineaActual}`);
+                lineaRef.on('value', (snapshot) => {
                     const estadosFirebase = snapshot.val() || {};
                     contenedor.innerHTML = ''; 
 
@@ -199,7 +202,7 @@
 
     function alternarDescargaFirebase(numInterno, datosActuales) {
         const nuevoEstado = !datosActuales.descargado;
-        set(ref(db, `lineas/${lineaActual}/${numInterno}`), {
+        db.ref(`lineas/${lineaActual}/${numInterno}`).set({
             descargado: nuevoEstado,
             nota: datosActuales.nota || ""
         });
@@ -208,7 +211,7 @@
     function editarNotaFirebase(numInterno, datosActuales) {
         const nuevaNota = prompt("Escribí un mensaje para el interno " + numInterno + ":", datosActuales.nota || "");
         if (nuevaNota !== null) {
-            set(ref(db, `lineas/${lineaActual}/${numInterno}`), {
+            db.ref(`lineas/${lineaActual}/${numInterno}`).set({
                 descargado: datosActuales.descargado,
                 nota: nuevaNota.trim()
             });
