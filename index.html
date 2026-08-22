@@ -79,16 +79,8 @@
             word-break: break-word;
             opacity: 0.9;
         }
-        .loading {
-            font-size: 16px;
-            color: #666;
-            margin-top: 10px;
-        }
-        .error {
-            font-size: 16px;
-            color: #dc3545;
-            margin-top: 10px;
-        }
+        .loading { font-size: 16px; color: #666; margin-top: 10px; }
+        .error { font-size: 16px; color: #dc3545; margin-top: 10px; }
     </style>
 </head>
 <body>
@@ -110,11 +102,10 @@
         <div id="internos-container" class="internos-grid"></div>
     </div>
     <script type="module">
-    // 1. IMPORTAR LIBRERÍAS DE FIREBASE
     import { initializeApp } from "https://gstatic.com";
     import { getDatabase, ref, set, onValue } from "https://gstatic.com";
 
-    // 2. CONFIGURACIÓN (Reemplazá con tus claves reales de Firebase)
+    // Pegá acá tus credenciales reales obtenidas de la consola de Firebase
     const firebaseConfig = {
       apiKey: "TU_API_KEY_AQUÍ",
       authDomain: "TU_AUTH_DOMAIN_AQUÍ",
@@ -125,23 +116,18 @@
       appId: "TU_APP_ID_AQUÍ"
     };
 
-    // Inicializar app y base de datos en tiempo real
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
-
     let lineaActual = "";
-    // 3. DEFINIR FUNCIÓN GLOBAL DE CARGA DE LÍNEAS
     window.cargarLinea = function(linea, botonElemento) {
         lineaActual = linea;
         
-        // Estilo activo para el botón presionado
         document.querySelectorAll('.btn-linea').forEach(b => b.classList.remove('active'));
         if (botonElemento) botonElemento.classList.add('active');
 
         const titulo = document.getElementById('titulo-linea');
         titulo.innerHTML = `Línea ${linea.toUpperCase()} <div class='loading'>Buscando archivo lineas/${linea}.txt...</div>`;
 
-        // Leer el archivo .txt original
         fetch(`lineas/${linea}.txt?t=${new Date().getTime()}`)
             .then(response => {
                 if (!response.ok) throw new Error();
@@ -154,7 +140,6 @@
                 const contenedor = document.getElementById('internos-container');
                 contenedor.innerHTML = '';
 
-                // Suscribirse a los cambios de Firebase en tiempo real para esta línea
                 const lineaRef = ref(db, `lineas/${lineaActual}`);
                 onValue(lineaRef, (snapshot) => {
                     const estadosFirebase = snapshot.val() || {};
@@ -182,17 +167,14 @@
                 document.getElementById('internos-container').innerHTML = '';
             });
     }
-    // 4. DETECTOR DE GESTOS TÁCTILES Y EVENTOS DE RENDIMIENTO
     function configurarEventos(elemento, numInterno, datosActuales) {
         let tiempoPresionado;
         let ultimoToque = 0;
 
-        // Gestión táctil para dispositivos móviles
         elemento.addEventListener('touchstart', (e) => {
             const tiempoActual = new Date().getTime();
             const diferenciaToques = tiempoActual - ultimoToque;
 
-            // DETECTAR DOBLE TOQUE -> MENSAJE
             if (diferenciaToques < 300 && diferenciaToques > 0) {
                 clearTimeout(tiempoPresionado);
                 e.preventDefault();
@@ -201,7 +183,6 @@
             }
             ultimoToque = tiempoActual;
             
-            // DETECTAR TOQUE LARGO (600ms) -> COLOR VERDE
             tiempoPresionado = setTimeout(() => {
                 alternarDescargaFirebase(numInterno, datosActuales);
             }, 600); 
@@ -210,14 +191,12 @@
         elemento.addEventListener('touchmove', () => clearTimeout(tiempoPresionado));
         elemento.addEventListener('touchend', () => clearTimeout(tiempoPresionado));
 
-        // Gestión para computadoras convencionales
         elemento.addEventListener('dblclick', (e) => {
             e.preventDefault();
             editarNotaFirebase(numInterno, datosActuales);
         });
     }
 
-    // 5. ENVIAR ACTUALIZACIONES INMEDIATAS A FIREBASE
     function alternarDescargaFirebase(numInterno, datosActuales) {
         const nuevoEstado = !datosActuales.descargado;
         set(ref(db, `lineas/${lineaActual}/${numInterno}`), {
