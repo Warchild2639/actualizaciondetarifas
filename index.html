@@ -3,238 +3,144 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Control de Internos</title>
+    <title>Actualizacion de Tarifas</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-            background-color: #f4f4f9;
-        }
-        h1 {
-            text-align: center;
-        }
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-        .lineas-container {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            justify-content: center;
-            margin-bottom: 20px;
-        }
-        .btn-linea {
-            padding: 10px 20px;
-            font-size: 16px;
-            cursor: pointer;
-            border: none;
-            background-color: #007bff;
-            color: white;
-            border-radius: 5px;
-            transition: background-color 0.2s;
-        }
-        .btn-linea:hover {
-            background-color: #0056b3;
-        }
-        .btn-linea.active {
-            background-color: #28a745;
-        }
-        .internos-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-            gap: 15px;
-            margin-top: 20px;
-        }
-        .interno {
-            background: white;
-            border: 2px solid #ccc;
-            border-radius: 8px;
-            padding: 15px;
-            text-align: center;
-            font-size: 18px;
-            cursor: pointer;
-            user-select: none;
-            position: relative;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            min-height: 80px;
-        }
-        .interno.descargado {
-            background-color: #28a745;
-            color: white;
-            border-color: #1e7e34;
-        }
-        .interno .numero {
-            font-weight: bold;
-            font-size: 22px;
-        }
-        .interno .nota-indicador {
-            font-size: 12px;
-            margin-top: 5px;
-            display: block;
-            word-break: break-word;
-            opacity: 0.9;
-        }
-        .loading {
-            font-size: 16px;
-            color: #666;
-            margin-top: 10px;
-        }
-        .error {
-            font-size: 16px;
-            color: #dc3545;
-            margin-top: 10px;
-        }
+        * { box-sizing: border-box; font-family: sans-serif; margin: 0; padding: 0; }
+        body { background: #f0f2f5; padding: 15px; text-align: center; -webkit-user-select: none; user-select: none; }
+        h1 { margin-bottom: 15px; font-size: 1.5rem; color: #333; }
+        
+        /* Menú de líneas */
+        .menu-lineas { display: grid; grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); gap: 10px; margin-bottom: 20px; }
+        .btn-linea { background: #007bff; color: white; border: none; padding: 12px; font-size: 1rem; font-weight: bold; border-radius: 8px; cursor: pointer; }
+        .btn-linea.activo { background: #0056b3; box-shadow: inset 0 0 5px rgba(0,0,0,0.5); }
+        
+        /* Grilla de colectivos */
+        .contenedor-internos { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 15px; }
+        .interno { background: white; border: 2px solid #ccc; border-radius: 8px; padding: 15px 5px; font-size: 1.1rem; font-weight: bold; position: relative; display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 70px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        
+        /* Estados */
+        .interno.descargado { background: #28a745 !important; color: white; border-color: #1e7e34; }
+        .nota-indicador { font-size: 0.65rem; color: #666; font-weight: normal; margin-top: 4px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .interno.descargado .nota-indicador { color: #e2fcd4; }
+        
+        /* Mensaje de carga o error */
+        .mensaje-estado { color: #666; font-style: italic; margin-top: 20px; grid-column: span 4; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Actualización de Tarifas</h1>
-        
-        <div class="lineas-container">
-            <button class="btn-linea" onclick="cargarLinea('271', this)">271</button>
-            <button class="btn-linea" onclick="cargarLinea('299', this)">299</button>
-            <button class="btn-linea" onclick="cargarLinea('373', this)">373</button>
-            <button class="btn-linea" onclick="cargarLinea('384', this)">384</button>
-            <button class="btn-linea" onclick="cargarLinea('505', this)">505</button>
-            <button class="btn-linea" onclick="cargarLinea('570', this)">570</button>
-            <button class="btn-linea" onclick="cargarLinea('514', this)">514</button>
-            <button class="btn-linea" onclick="cargarLinea('varela', this)">Varela</button>
-        </div>
 
-        <h2 id="titulo-linea">Seleccione una línea</h2>
-        <div id="internos-container" class="internos-grid"></div>
+    <h1 id="titulo-vista">Seleccione una Línea</h1>
+    
+    <!-- Menú de Líneas -->
+    <div class="menu-lineas">
+        <button class="btn-linea" onclick="cargarLinea('271', this)">271</button>
+        <button class="btn-linea" onclick="cargarLinea('373', this)">373</button>
+        <button class="btn-linea" onclick="cargarLinea('384', this)">384</button>
+        <button class="btn-linea" onclick="cargarLinea('177', this)">177</button>
+        <button class="btn-linea" onclick="cargarLinea('263', this)">263</button>
+        <button class="btn-linea" onclick="cargarLinea('79', this)">79</button>
+        <button class="btn-linea" onclick="cargarLinea('514', this)">514</button>
+        <button class="btn-linea" onclick="cargarLinea('varela', this)">Varela</button>
     </div>
-    <script type="module">
-    // 1. IMPORTAR LIBRERÍAS DE FIREBASE
-    import { initializeApp } from "https://gstatic.com";
-    import { getDatabase, ref, set, onValue } from "https://gstatic.com";
 
-    // 2. CONFIGURACIÓN (Reemplazá con tus claves reales de Firebase)
-    const firebaseConfig = {
-      apiKey: "TU_API_KEY_AQUÍ",
-      authDomain: "TU_AUTH_DOMAIN_AQUÍ",
-      databaseURL: "TU_DATABASE_URL_AQUÍ",
-      projectId: "TU_PROJECT_ID_AQUÍ",
-      storageBucket: "TU_STORAGE_BUCKET_AQUÍ",
-      messagingSenderId: "TU_MESSAGING_SENDER_ID_AQUÍ",
-      appId: "TU_APP_ID_AQUÍ"
-    };
+    <!-- Panel de Internos -->
+    <div class="contenedor-internos" id="panel-internos">
+        <div class="mensaje-estado">Ninguna línea seleccionada</div>
+    </div>
+    
+    <script>
+        function cargarLinea(linea, botonElemento) {
+            document.getElementById('titulo-vista').innerText = `Cargando Línea ${linea.toUpperCase()}...`;
+            
+            // Marcar botón activo visualmente
+            document.querySelectorAll('.btn-linea').forEach(btn => btn.classList.remove('activo'));
+            botonElemento.classList.add('activo');
 
-    // Inicializar app y base de datos en tiempo real
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
+            const contenedor = document.getElementById('panel-internos');
+            contenedor.innerHTML = `<div class="mensaje-estado">Buscando archivo lineas/${linea}.txt...</div>`;
 
-    let lineaActual = "";
-    // 3. DEFINIR FUNCIÓN GLOBAL DE CARGA DE LÍNEAS
-    window.cargarLinea = function(linea, botonElemento) {
-        lineaActual = linea;
-        
-        // Estilo activo para el botón presionado
-        document.querySelectorAll('.btn-linea').forEach(b => b.classList.remove('active'));
-        if (botonElemento) botonElemento.classList.add('active');
+            // Buscamos el archivo de texto en la subcarpeta local
+            fetch(`lineas/${linea}.txt`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`No se encontró el archivo de la línea ${linea}`);
+                    }
+                    return response.text();
+                })
+                .then(texto => {
+                    document.getElementById('titulo-vista').innerText = `Línea ${linea.toUpperCase()}`;
+                    contenedor.innerHTML = "";
 
-        const titulo = document.getElementById('titulo-linea');
-        titulo.innerHTML = `Línea ${linea.toUpperCase()} <div class='loading'>Buscando archivo lineas/${linea}.txt...</div>`;
+                    // Separar el texto por saltos de línea y limpiar espacios en blanco o líneas vacías
+                    const internos = texto.split('\n')
+                                          .map(linea => linea.trim())
+                                          .filter(linea => linea.length > 0);
 
-        // Leer el archivo .txt original
-        fetch(`lineas/${linea}.txt?t=${new Date().getTime()}`)
-            .then(response => {
-                if (!response.ok) throw new Error();
-                return response.text();
-            })
-            .then(text => {
-                const internos = text.split('\n').map(line => line.trim()).filter(line => line.length > 0);
-                titulo.textContent = `Línea ${linea.toUpperCase()}`;
-                
-                const contenedor = document.getElementById('internos-container');
-                contenedor.innerHTML = '';
+                    if (internos.length === 0) {
+                        contenedor.innerHTML = `<div class="mensaje-estado">El archivo de la línea ${linea} está vacío.</div>`;
+                        return;
+                    }
 
-                // Suscribirse a los cambios de Firebase en tiempo real para esta línea
-                const lineaRef = ref(db, `lineas/${lineaActual}`);
-                onValue(lineaRef, (snapshot) => {
-                    const estadosFirebase = snapshot.val() || {};
-                    contenedor.innerHTML = ''; 
-
+                    // Renderizar los internos en pantalla
                     internos.forEach(num => {
                         const div = document.createElement('div');
                         div.className = 'interno';
+                        div.setAttribute('data-interno', num);
                         
-                        const datosInterno = estadosFirebase[num] || { descargado: false, nota: "" };
-                        if (datosInterno.descargado) div.classList.add('descargado');
+                        // Clave para guardar el estado individual en localStorage
+                        const idEstado = `${linea}-${num}`;
+                        const estadoGuardado = JSON.parse(localStorage.getItem(idEstado)) || { descargado: false, nota: "" };
 
-                        div.innerHTML = `
-                            <span class="numero">${num}</span>
-                            <span class="nota-indicador">${datosInterno.nota || ""}</span>
-                        `;
+                        if (estadoGuardado.descargado) div.classList.add('descargado');
+                        
+                        div.innerHTML = `<span>${num}</span><div class="nota-indicador">${estadoGuardado.nota}</div>`;
 
-                        configurarEventos(div, num, datosInterno);
+                        // Configurar eventos de toque largo únicamente
+                        configurarEventosToque(div, idEstado);
+
                         contenedor.appendChild(div);
                     });
+                })
+                .catch(error => {
+                    document.getElementById('titulo-vista').innerText = "Error";
+                    contenedor.innerHTML = `<div class="mensaje-estado" style="color: red;">⚠️ Error al cargar el archivo de la línea ${linea}. Asegurate de que exista en la carpeta "lineas".</div>`;
+                    console.error(error);
                 });
-            })
-            .catch(() => {
-                titulo.innerHTML = `Línea ${linea.toUpperCase()} <div class='error'>No se pudo cargar el archivo de internos. Asegúrate de que exista en la carpeta "lineas".</div>`;
-                document.getElementById('internos-container').innerHTML = '';
+        }
+
+        function configurarEventosToque(elemento, idEstado) {
+            let tiempoPresionado;
+
+            // Inicia la presión en pantallas táctiles
+            elemento.addEventListener('touchstart', (e) => {
+                tiempoPresionado = setTimeout(() => {
+                    alternarDescarga(elemento, idEstado);
+                }, 600); // 600ms manteniendo apretado para marcar en verde
             });
-    }
-    // 4. DETECTOR DE GESTOS TÁCTILES Y EVENTOS DE RENDIMIENTO
-    function configurarEventos(elemento, numInterno, datosActuales) {
-        let tiempoPresionado;
-        let ultimoToque = 0;
 
-        // Gestión táctil para dispositivos móviles
-        elemento.addEventListener('touchstart', (e) => {
-            const tiempoActual = new Date().getTime();
-            const diferenciaToques = tiempoActual - ultimoToque;
-
-            // DETECTAR DOBLE TOQUE -> MENSAJE
-            if (diferenciaToques < 300 && diferenciaToques > 0) {
+            // Si el usuario mueve el dedo (hace scroll), se cancela la acción
+            elemento.addEventListener('touchmove', () => {
                 clearTimeout(tiempoPresionado);
+            });
+
+            // Si suelta antes de tiempo, se cancela la acción
+            elemento.addEventListener('touchend', () => {
+                clearTimeout(tiempoPresionado);
+            });
+
+            // Evitar comportamiento por defecto del clic corto en celulares o PC
+            elemento.addEventListener('click', (e) => {
                 e.preventDefault();
-                editarNotaFirebase(numInterno, datosActuales);
-                return;
-            }
-            ultimoToque = tiempoActual;
-            
-            // DETECTAR TOQUE LARGO (600ms) -> COLOR VERDE
-            tiempoPresionado = setTimeout(() => {
-                alternarDescargaFirebase(numInterno, datosActuales);
-            }, 600); 
-        });
-
-        elemento.addEventListener('touchmove', () => clearTimeout(tiempoPresionado));
-        elemento.addEventListener('touchend', () => clearTimeout(tiempoPresionado));
-
-        // Gestión para computadoras convencionales
-        elemento.addEventListener('dblclick', (e) => {
-            e.preventDefault();
-            editarNotaFirebase(numInterno, datosActuales);
-        });
-    }
-
-    // 5. ENVIAR ACTUALIZACIONES INMEDIATAS A FIREBASE
-    function alternarDescargaFirebase(numInterno, datosActuales) {
-        const nuevoEstado = !datosActuales.descargado;
-        set(ref(db, `lineas/${lineaActual}/${numInterno}`), {
-            descargado: nuevoEstado,
-            nota: datosActuales.nota || ""
-        });
-    }
-
-    function editarNotaFirebase(numInterno, datosActuales) {
-        const nuevaNota = prompt("Escribí un mensaje para el interno " + numInterno + ":", datosActuales.nota || "");
-        if (nuevaNota !== null) {
-            set(ref(db, `lineas/${lineaActual}/${numInterno}`), {
-                descargado: datosActuales.descargado,
-                nota: nuevaNota.trim()
             });
         }
-    }
+
+        function alternarDescarga(elemento, idEstado) {
+            const estado = JSON.parse(localStorage.getItem(idEstado)) || { descargado: false, nota: "" };
+            estado.descargado = !estado.descargado;
+            
+            localStorage.setItem(idEstado, JSON.stringify(estado));
+            elemento.classList.toggle('descargado');
+        }
     </script>
 </body>
 </html>
