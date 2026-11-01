@@ -96,10 +96,17 @@ function cargarLinea(linea,botonElemento){lineaActual=linea;localStorage.setItem
 function configurarEventosToque(elemento,linea,interno){let tiempoPresionado;let ultimoTap=0;let dobleTapBloqueado=false;elemento.addEventListener('touchstart',()=>{tiempoPresionado=setTimeout(()=>alternarDescarga(linea,interno),600)},{passive:true});elemento.addEventListener('touchmove',()=>clearTimeout(tiempoPresionado),{passive:true});elemento.addEventListener('touchend',e=>{clearTimeout(tiempoPresionado);const ahora=Date.now();if(ahora-ultimoTap<350){e.preventDefault();dobleTapBloqueado=true;ultimoTap=0;editarMensaje(linea,interno);setTimeout(()=>dobleTapBloqueado=false,50)}else ultimoTap=ahora},{passive:false});elemento.addEventListener('touchcancel',()=>clearTimeout(tiempoPresionado),{passive:true});elemento.addEventListener('dblclick',e=>{e.preventDefault();editarMensaje(linea,interno)});elemento.addEventListener('click',e=>e.preventDefault())}
 function editarMensaje(linea,interno){const referencia=database.ref(`estados/${linea}/${interno}`);referencia.once('value').then(snapshot=>{const estado=snapshot.val()||{descargado:false,nota:""};const mensaje=prompt(`Mensaje para el interno ${interno}:`,estado.nota||'');if(mensaje===null)return;const texto=mensaje.trim();return referencia.transaction(estadoActual=>{const actual=estadoActual||{descargado:false,nota:""};return{descargado:!!actual.descargado,nota:texto}})}).then(resultado=>{if(resultado)console.log(`Mensaje del interno ${interno} actualizado`)}).catch(error=>{console.error('Error guardando mensaje:',error);alert('No se pudo guardar el mensaje.')})}
 function alternarDescarga(linea,interno){const referencia=database.ref(`estados/${linea}/${interno}`);referencia.transaction(estadoActual=>{const estado=estadoActual||{descargado:false,nota:""};return{descargado:!estado.descargado,nota:estado.nota||""}}).then(()=>console.log(`Interno ${interno} actualizado`)).catch(error=>{console.error('Error guardando:',error);alert('No se pudo guardar el cambio.')})}
+async function cargarMotorPDF(){
+const cargar=url=>new Promise((resolve,reject)=>{const script=document.createElement('script');script.src=url;script.onload=resolve;script.onerror=()=>reject(new Error('No se pudo cargar '+url));document.head.appendChild(script)});
+if(!window.jspdf?.jsPDF){try{await cargar('https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js')}catch(error){await cargar('https://unpkg.com/jspdf@2.5.2/dist/jspdf.umd.min.js')}}
+if(!window.jspdf?.jsPDF)throw new Error('jsPDF no disponible');
+if(typeof window.jspdf.jsPDF.API.autoTable!=='function'){try{await cargar('https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.4/dist/jspdf.plugin.autotable.min.js')}catch(error){await cargar('https://unpkg.com/jspdf-autotable@3.8.4/dist/jspdf.plugin.autotable.min.js')}}
+if(typeof window.jspdf.jsPDF.API.autoTable!=='function')throw new Error('Generador de tablas no disponible');
+}
 async function exportarComentariosPDF(){
 const boton=document.getElementById('exportar-pdf');boton.disabled=true;boton.textContent='Preparando PDF...';
 try{
-if(!window.jspdf||!window.jspdf.jsPDF)throw new Error('No se cargó el generador PDF');
+await cargarMotorPDF();
 const snapshot=await database.ref('estados').once('value');const estados=snapshot.val()||{};const filas=[];
 for(const linea of lineasProgreso){if(lineasBloqueadas[linea])continue;const internos=estados[linea]||{};for(const [interno,estado] of Object.entries(internos)){const nota=String((estado&&estado.nota)||'').trim();if(nota)filas.push([nombresLineas[linea],interno,nota])}}
 filas.sort((a,b)=>lineasProgreso.indexOf(a[0].toLowerCase())-lineasProgreso.indexOf(b[0].toLowerCase())||a[1].localeCompare(b[1],undefined,{numeric:true}));
