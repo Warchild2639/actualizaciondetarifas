@@ -101,12 +101,12 @@ const boton=document.getElementById('exportar-pdf');boton.disabled=true;boton.te
 try{
 if(!window.jspdf||!window.jspdf.jsPDF)throw new Error('No se cargó el generador PDF');
 const snapshot=await database.ref('estados').once('value');const estados=snapshot.val()||{};const filas=[];
-for(const linea of lineasProgreso){const internos=estados[linea]||{};for(const [interno,estado] of Object.entries(internos)){const nota=String((estado&&estado.nota)||'').trim();if(nota)filas.push([nombresLineas[linea],interno,nota])}}
+for(const linea of lineasProgreso){if(lineasBloqueadas[linea])continue;const internos=estados[linea]||{};for(const [interno,estado] of Object.entries(internos)){const nota=String((estado&&estado.nota)||'').trim();if(nota)filas.push([nombresLineas[linea],interno,nota])}}
 filas.sort((a,b)=>lineasProgreso.indexOf(a[0].toLowerCase())-lineasProgreso.indexOf(b[0].toLowerCase())||a[1].localeCompare(b[1],undefined,{numeric:true}));
 if(!filas.length){alert('No hay coches con comentarios para exportar.');return}
 const doc=new window.jspdf.jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
 const fecha=new Date();const fechaTexto=fecha.toLocaleString('es-AR');
-doc.setFont('helvetica','bold');doc.setFontSize(16);doc.text('Actualización de tarifas - Observaciones',14,18);
+doc.setFont('helvetica','bold');doc.setFontSize(16);doc.text('Cabecera Carlan - Observaciones',14,18);
 doc.setFont('helvetica','normal');doc.setFontSize(10);doc.text('Generado: '+fechaTexto,14,25);doc.text('Colectivos con comentarios: '+filas.length,14,31);
 doc.autoTable({startY:37,head:[['Línea','Interno','Comentario']],body:filas,theme:'grid',styles:{fontSize:9,cellPadding:3,overflow:'linebreak'},headStyles:{fillColor:[35,80,115]},columnStyles:{0:{cellWidth:23},1:{cellWidth:25},2:{cellWidth:'auto'}},margin:{left:14,right:14,bottom:16},didDrawPage:data=>{const paginas=doc.internal.getNumberOfPages();doc.setFontSize(8);doc.setTextColor(110);doc.text('Página '+data.pageNumber,196,289,{align:'right'})}});
 const nombre='comentarios_tarifas_'+fecha.getFullYear()+'-'+String(fecha.getMonth()+1).padStart(2,'0')+'-'+String(fecha.getDate()).padStart(2,'0')+'.pdf';doc.save(nombre);
