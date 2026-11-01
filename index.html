@@ -45,6 +45,7 @@ h1{margin-bottom:15px;font-size:1.5rem;color:#333}
 @media(max-width:360px){.contenedor-internos{grid-template-columns:repeat(3,1fr)}.mensaje-estado{grid-column:span 3}.fila-progreso{grid-template-columns:48px 1fr 52px;gap:6px}.valor-progreso{font-size:.75rem}}
 #reinicio-panel{margin:16px auto;text-align:center}#reinicio-opciones{display:none;margin:10px auto;padding:12px;background:white;border-radius:8px;max-width:420px}#reinicio-panel button,#reinicio-panel select{padding:10px;margin:5px;border-radius:7px;cursor:pointer}#reinicio-panel button{background:#a83232;color:white;border:0}
 .fila-progreso.completa .barra-linea .relleno{background:#ffc400}.fila-progreso.completa .valor-progreso{color:#c18b00;font-weight:900}
+#exportar-pdf{display:block;margin:18px auto 24px;padding:13px 22px;background:#176b48;color:white;border:0;border-radius:9px;font-weight:bold;font-size:1rem;cursor:pointer}#exportar-pdf:disabled{opacity:.55;cursor:wait}
 </style>
 </head>
 <body>
@@ -70,9 +71,12 @@ h1{margin-bottom:15px;font-size:1.5rem;color:#333}
 <div class="lista-progreso" id="lista-progreso"><div class="sin-datos">Calculando progreso de las líneas...</div></div>
 </div>
 <div id="reinicio-panel"><button onclick="document.getElementById('reinicio-opciones').style.display='block'">Reiniciar chequeo</button><div id="reinicio-opciones"><select id="reinicio-linea"><option value="">Todas las líneas</option><option value="271">271</option><option value="373">373</option><option value="384">384</option><option value="177">177</option><option value="263">263</option><option value="79">79</option><option value="514">514</option><option value="varela">Varela</option></select><button id="reinicio-confirmar" onclick="reiniciarChequeo()">Borrar registros</button><button onclick="document.getElementById('reinicio-opciones').style.display='none'">Cancelar</button></div></div><div class="contenedor-internos" id="panel-internos"><div class="mensaje-estado">Ninguna línea seleccionada</div></div>
+<button id="exportar-pdf" onclick="exportarComentariosPDF()">📄 Exportar comentarios a PDF</button>
 <button id="boton-volver" onclick="volverAlMenu()" aria-label="Volver">←</button>
 <script src="https://www.gstatic.com/firebasejs/11.10.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/11.10.0/firebase-database-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.4/jspdf.plugin.autotable.min.js"></script>
 <script>
 const firebaseConfig={apiKey:"AIzaSyBdYu1yjsshw0lXXQ9PRlN-hPEHB6tjNF4",authDomain:"tarifas-compartidas.firebaseapp.com",databaseURL:"https://tarifas-compartidas-default-rtdb.firebaseio.com",projectId:"tarifas-compartidas",storageBucket:"tarifas-compartidas.firebasestorage.app",messagingSenderId:"943166246045",appId:"1:943166246045:web:f0df71d42acf52ebf15874",measurementId:"G-TXK4ZW38ZK"};
 firebase.initializeApp(firebaseConfig);const database=firebase.database();let referenciaEstados=null;let lineaActual=null;
@@ -92,6 +96,23 @@ function cargarLinea(linea,botonElemento){lineaActual=linea;localStorage.setItem
 function configurarEventosToque(elemento,linea,interno){let tiempoPresionado;let ultimoTap=0;let dobleTapBloqueado=false;elemento.addEventListener('touchstart',()=>{tiempoPresionado=setTimeout(()=>alternarDescarga(linea,interno),600)},{passive:true});elemento.addEventListener('touchmove',()=>clearTimeout(tiempoPresionado),{passive:true});elemento.addEventListener('touchend',e=>{clearTimeout(tiempoPresionado);const ahora=Date.now();if(ahora-ultimoTap<350){e.preventDefault();dobleTapBloqueado=true;ultimoTap=0;editarMensaje(linea,interno);setTimeout(()=>dobleTapBloqueado=false,50)}else ultimoTap=ahora},{passive:false});elemento.addEventListener('touchcancel',()=>clearTimeout(tiempoPresionado),{passive:true});elemento.addEventListener('dblclick',e=>{e.preventDefault();editarMensaje(linea,interno)});elemento.addEventListener('click',e=>e.preventDefault())}
 function editarMensaje(linea,interno){const referencia=database.ref(`estados/${linea}/${interno}`);referencia.once('value').then(snapshot=>{const estado=snapshot.val()||{descargado:false,nota:""};const mensaje=prompt(`Mensaje para el interno ${interno}:`,estado.nota||'');if(mensaje===null)return;const texto=mensaje.trim();return referencia.transaction(estadoActual=>{const actual=estadoActual||{descargado:false,nota:""};return{descargado:!!actual.descargado,nota:texto}})}).then(resultado=>{if(resultado)console.log(`Mensaje del interno ${interno} actualizado`)}).catch(error=>{console.error('Error guardando mensaje:',error);alert('No se pudo guardar el mensaje.')})}
 function alternarDescarga(linea,interno){const referencia=database.ref(`estados/${linea}/${interno}`);referencia.transaction(estadoActual=>{const estado=estadoActual||{descargado:false,nota:""};return{descargado:!estado.descargado,nota:estado.nota||""}}).then(()=>console.log(`Interno ${interno} actualizado`)).catch(error=>{console.error('Error guardando:',error);alert('No se pudo guardar el cambio.')})}
+async function exportarComentariosPDF(){
+const boton=document.getElementById('exportar-pdf');boton.disabled=true;boton.textContent='Preparando PDF...';
+try{
+if(!window.jspdf||!window.jspdf.jsPDF)throw new Error('No se cargó el generador PDF');
+const snapshot=await database.ref('estados').once('value');const estados=snapshot.val()||{};const filas=[];
+for(const linea of lineasProgreso){const internos=estados[linea]||{};for(const [interno,estado] of Object.entries(internos)){const nota=String((estado&&estado.nota)||'').trim();if(nota)filas.push([nombresLineas[linea],interno,nota])}}
+filas.sort((a,b)=>lineasProgreso.indexOf(a[0].toLowerCase())-lineasProgreso.indexOf(b[0].toLowerCase())||a[1].localeCompare(b[1],undefined,{numeric:true}));
+if(!filas.length){alert('No hay coches con comentarios para exportar.');return}
+const doc=new window.jspdf.jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+const fecha=new Date();const fechaTexto=fecha.toLocaleString('es-AR');
+doc.setFont('helvetica','bold');doc.setFontSize(16);doc.text('Actualización de tarifas - Observaciones',14,18);
+doc.setFont('helvetica','normal');doc.setFontSize(10);doc.text('Generado: '+fechaTexto,14,25);doc.text('Colectivos con comentarios: '+filas.length,14,31);
+doc.autoTable({startY:37,head:[['Línea','Interno','Comentario']],body:filas,theme:'grid',styles:{fontSize:9,cellPadding:3,overflow:'linebreak'},headStyles:{fillColor:[35,80,115]},columnStyles:{0:{cellWidth:23},1:{cellWidth:25},2:{cellWidth:'auto'}},margin:{left:14,right:14,bottom:16},didDrawPage:data=>{const paginas=doc.internal.getNumberOfPages();doc.setFontSize(8);doc.setTextColor(110);doc.text('Página '+data.pageNumber,196,289,{align:'right'})}});
+const nombre='comentarios_tarifas_'+fecha.getFullYear()+'-'+String(fecha.getMonth()+1).padStart(2,'0')+'-'+String(fecha.getDate()).padStart(2,'0')+'.pdf';doc.save(nombre);
+}catch(error){console.error('Error al exportar PDF:',error);alert('No se pudo generar el PDF. Verificá la conexión e intentá nuevamente.')}
+finally{boton.disabled=false;boton.textContent='📄 Exportar comentarios a PDF'}
+}
 async function reiniciarChequeo(){const linea=document.getElementById('reinicio-linea').value;const nombre=linea?'línea '+linea:'TODAS LAS LÍNEAS';const clave=prompt('Clave para reiniciar '+nombre+':');if(clave===null)return;if(clave!=='2639'){alert('Clave incorrecta');return}if(!confirm('¿Confirmás borrar las marcas y observaciones de '+nombre+' en todos los dispositivos?'))return;const boton=document.getElementById('reinicio-confirmar');boton.disabled=true;try{await database.ref(linea?'estados/'+linea:'estados').remove();alert('Registros reiniciados');document.getElementById('reinicio-opciones').style.display='none'}catch(e){console.error(e);alert('Error al borrar registros. Revisá los permisos de Firebase.')}finally{boton.disabled=false}}
 function volverAlMenu(){if(referenciaEstados){referenciaEstados.off();referenciaEstados=null}lineaActual=null;localStorage.removeItem('ultimaLinea');document.getElementById('titulo-vista').innerText='Seleccione una Línea';document.querySelectorAll('.btn-linea').forEach(btn=>btn.classList.remove('activo'));document.getElementById('panel-internos').innerHTML='<div class="mensaje-estado">Ninguna línea seleccionada</div>';document.getElementById('panel-progreso').style.display='block';document.getElementById('boton-volver').style.display='none'}
 window.addEventListener('load',()=>{configurarBotonesLineas();iniciarProgreso();const ultimaLinea=localStorage.getItem('ultimaLinea');if(!ultimaLinea)return;const boton=Array.from(document.querySelectorAll('.btn-linea')).find(btn=>btn.innerText.trim().toLowerCase()===ultimaLinea.toLowerCase());if(boton)cargarLinea(ultimaLinea,boton)})
