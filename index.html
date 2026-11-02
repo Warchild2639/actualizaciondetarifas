@@ -47,6 +47,42 @@ h1{margin-bottom:15px;font-size:1.5rem;color:#333}
 .fila-progreso.completa .barra-linea .relleno{background:#ffc400}.fila-progreso.completa .valor-progreso{color:#c18b00;font-weight:900}
 #exportar-pdf{display:block;margin:18px auto 24px;padding:13px 22px;background:#176b48;color:white;border:0;border-radius:9px;font-weight:bold;font-size:1rem;cursor:pointer}#exportar-pdf:disabled{opacity:.55;cursor:wait}
 #compartir-pdf{display:block;margin:0 auto 24px;padding:13px 22px;background:#25d366;color:#083c22;border:0;border-radius:9px;font-size:1rem;font-weight:bold;cursor:pointer}#compartir-pdf:disabled{opacity:.5}
+
+/* Estética P2P / telemetría Cabecera Carlan */
+:root{color-scheme:dark}
+body{background:radial-gradient(ellipse at top,#13232c 0%,#080e14 54%,#05080c 100%);color:#dcecf2;min-height:100vh}
+h1{color:#e9f7ff;text-transform:uppercase;letter-spacing:.08em;text-shadow:0 0 14px #00b7e644}
+#estado-conexion{border:1px solid #294651;background:#111e27;color:#afcbd6}
+#estado-conexion.conectado{background:#102a24;border-color:#17865f;color:#79f5bf}
+#estado-conexion.desconectado{background:#292419;border-color:#776028;color:#f3c765}
+.btn-linea{background:linear-gradient(180deg,#173b50,#102634);border:1px solid #28728a;color:#d5f8ff;box-shadow:inset 0 1px #6ce7ff1c,0 3px 10px #0007}
+.btn-linea.activo{background:#124d69;border-color:#4edfff;box-shadow:0 0 13px #13c7ff50,inset 0 0 7px #00caff44}
+.btn-linea.bloqueada{background:#292d32;color:#abb5be;border-color:#52575c;box-shadow:none}
+#panel-progreso{background:linear-gradient(155deg,#13222d,#0b151e);border:1px solid #244354;box-shadow:0 5px 25px #0009,0 0 14px #0088bc18}
+#panel-progreso h2{color:#dff6ff;letter-spacing:.045em}
+.progreso-general .porcentaje{color:#40d5ff;text-shadow:0 0 16px #1bc8ff55}
+.progreso-general .detalle{color:#a5bac7}
+.barra-general,.barra-linea{background:#253541}
+.barra-general .relleno{background:linear-gradient(90deg,#007fbd,#35d7ff)}
+.nombre-linea{color:#d4eaf3}
+.valor-progreso{color:#b6d3df}
+.fila-progreso.completa .barra-linea .relleno{background:#ffc400;box-shadow:0 0 9px #ffc40077}
+.fila-progreso.completa .valor-progreso{color:#ffdc4b;text-shadow:0 0 9px #ffc40055}
+.interno{background:#14232e;border-color:#365262;color:#e3f4fc;box-shadow:0 2px 8px #0005}
+.interno.descargado{background:#146744!important;border-color:#28b77d;color:#fff}
+.interno.con-mensaje,.interno.descargado.con-mensaje{background:#a7650b!important;border-color:#e5a12a;color:white}
+.nota-indicador{color:#9db4c1}
+.mensaje-estado,.sin-datos{color:#9eb4c1}
+#reinicio-opciones{background:#14232e;border:1px solid #345364;color:#dcecf2}
+#reinicio-panel button{background:#74323a;border:1px solid #c65c63}
+#reinicio-panel select{background:#12232e;color:#e4f4ff;border:1px solid #42677c}
+#boton-volver{background:#125979;border:1px solid #43bde7;box-shadow:0 0 13px #00bbff44}
+#exportar-pdf{background:linear-gradient(180deg,#175c69,#0d3b4b);border:1px solid #31a9c2;color:#e1fbff}
+#compartir-pdf{background:linear-gradient(180deg,#167f54,#0d593b);border:1px solid #36c786;color:white}
+#acciones-informes{margin-top:12px}
+#marca-kraken{display:flex;justify-content:center;align-items:center;margin:22px auto 8px;min-height:44px}
+#marca-kraken img{display:block;max-width:112px;max-height:100px;object-fit:contain}
+
 </style>
 </head>
 <body>
